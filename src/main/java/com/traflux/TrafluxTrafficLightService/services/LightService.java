@@ -4,6 +4,7 @@ import com.traflux.TrafluxTrafficLightService.entities.LightModel;
 import com.traflux.TrafluxTrafficLightService.enums.LightStatus;
 import com.traflux.TrafluxTrafficLightService.helper.ErrorMessages;
 import com.traflux.TrafluxTrafficLightService.repositories.LightRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,16 +18,25 @@ import java.util.List;
 @Service
 public class LightService {
 
-    @Value("${traflux.esp32.ngrok.url}")
+    @Value("${traflux.esp32.cloudflare.url}")
     String ESP32_URL;
+
+    @Value("${traflux.esp32.header.app.secret}")
+    String ESP32_APP_SECRET;
 
     private final LightRepository lightRepository;
 
-    private final WebClient webClient;
+    private WebClient webClient;
 
-    public LightService(LightRepository lightRepository, WebClient.Builder webClientBuilder) {
+    public LightService(LightRepository lightRepository) {
         this.lightRepository = lightRepository;
-        this.webClient = webClientBuilder.build();
+    }
+
+    @PostConstruct
+    public void init() {
+        this.webClient = WebClient.builder()
+                .defaultHeader("X-API-KEY", ESP32_APP_SECRET)  // Header ekleme
+                .build();
     }
 
     public List<LightModel> getAllTrafficLights() {
